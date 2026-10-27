@@ -1,1 +1,1068 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>EvoTask: แอปพลิเคชันติดตามการส่งงานแบบเกมมิฟิเคชัน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4e54c8; --secondary: #8f94fb; --accent: #ff6b6b; --success: #2ed573;
+            --bg: #f4f7fb; --card-bg: #ffffff; --text-main: #2d3436; --text-muted: #636e72; 
+            --shadow: 0 10px 20px rgba(0,0,0,0.08); --radius: 20px;
+        }
+        body { font-family: 'Prompt', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px 20px 20px; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; text-align: center; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .header h2 { margin: 0; font-weight: 700; font-size: 22px; letter-spacing: 0.5px; }
+        .header p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 0 20px 25px; flex: 1; }
+        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        
+        input, select, textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 2px solid #edf2f7; border-radius: 12px; font-family: 'Prompt', sans-serif; font-size: 14px; transition: all 0.3s; background: #f8fafc; }
+        input:focus, select:focus, textarea:focus { border-color: var(--secondary); outline: none; background: #fff; }
 
+        .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Prompt', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.3); }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(46, 213, 115, 0.3); }
+        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-small { padding: 8px 12px; font-size: 12px; border-radius: 8px; width: auto; }
+        
+        .text-center { text-align: center; }
+        .link { color: var(--primary); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: underline; }
+        .badge-device { display: inline-block; background: #eef2ff; color: var(--primary); font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; margin-top: 5px; border: 1px solid #c7d2fe; }
+
+        .top-nav { display: flex; margin: 0 20px 15px; background: #fff; border-radius: 15px; padding: 5px; box-shadow: var(--shadow); }
+        .top-nav-item { flex: 1; text-align: center; padding: 10px 5px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 10px; color: var(--text-muted); }
+        .top-nav-item.active { background: var(--primary); color: white; }
+
+        .bottom-nav { display: flex; background: white; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); border-top-left-radius: 20px; border-top-right-radius: 20px; position: sticky; bottom: 0; width: 100%; z-index: 10; }
+        .nav-item { flex: 1; text-align: center; padding: 14px 0; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+        .nav-item.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        .list-item { border: 1px solid #edf2f7; border-left: 4px solid var(--secondary); padding: 12px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
+        .list-item h4 { margin: 0 0 5px 0; font-size: 14px; color: var(--text-main); }
+        .list-item p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        
+        .rank-item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #edf2f7; }
+        .rank-num { font-size: 16px; font-weight: bold; width: 35px; text-align: center; color: var(--text-muted); }
+        .rank-1 { font-size: 26px; } .rank-2 { font-size: 24px; } .rank-3 { font-size: 22px; }
+        
+        .img-sprite { width: 135px; height: 135px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.12)); transition: transform 0.3s; }
+        .img-sprite:hover { transform: scale(1.05); }
+        .evolve-anim { animation: jump 0.5s infinite alternate; filter: drop-shadow(0 15px 15px rgba(230, 126, 34, 0.5)); }
+        @keyframes jump { from { transform: translateY(0); } to { transform: translateY(-20px) scale(1.08); } }
+
+        .exp-bar-wrapper { margin: 12px 0; text-align: left; }
+        .exp-bar-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+        .exp-bar-bg { width: 100%; height: 12px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+        .exp-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #4e54c8, #2ed573); border-radius: 10px; transition: width 0.6s ease; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .stat-box { background: #f0f4f8; padding: 12px; border-radius: 15px; text-align: center; }
+        .stat-box span { display: block; font-size: 22px; font-weight: 700; color: var(--primary); }
+
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 24px; width: 88%; max-width: 350px; text-align: center; max-height: 82vh; overflow-y: auto; box-shadow: var(--shadow); }
+        
+        .view-section { display: none; flex-direction: column; min-height: 100vh; }
+        
+        .report-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .report-table th, .report-table td { border: 1px solid #edf2f7; padding: 8px; text-align: center; }
+        .report-table th { background-color: var(--primary); color: white; font-weight: 600; white-space: nowrap; }
+        .report-table td:first-child { text-align: left; white-space: nowrap; }
+        .table-responsive { overflow-x: auto; border-radius: 10px; border: 1px solid #edf2f7; }
+
+        .camera-box { width: 100%; min-height: 260px; background: #1e272e; border-radius: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; color: #fff; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+    
+    <!-- โหมดสแกนเนอร์แยก (Popup Scanner สำหรับกรณีเปิดข้ามจาก iframe) -->
+    <div id="popup-scanner-section" class="view-section">
+        <div class="header">
+            <h2>📷 กล้องสแกน QR Code (EvoTask)</h2>
+            <p>หันกล้องไปยัง QR Code ของนักเรียน</p>
+        </div>
+        <div class="content">
+            <div class="card text-center">
+                <div id="popup-reader" class="camera-box">กำลังเปิดกล้อง...</div>
+                <p id="popup-status" style="font-size:13px; font-weight:bold; color:var(--primary);">กรุณากดอนุญาตการใช้กล้อง (Allow)</p>
+                <button class="btn btn-outline" onclick="window.close()">ปิดหน้าต่างนี้</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าเข้าสู่ระบบ -->
+    <div id="login-section" class="view-section" style="display:flex;">
+        <div class="header">
+            <h2>🚀 EvoTask</h2>
+            <p>แอปพลิเคชันติดตามการส่งงานแบบเกมมิฟิเคชันด้วย QR Code</p>
+        </div>
+        <div class="content">
+            <div class="card">
+                <h3 class="text-center" style="margin-top:0;">เข้าสู่ระบบผู้เรียน</h3>
+                <input type="text" id="loginUser" placeholder="รหัสประจำตัวนักเรียน" style="margin-bottom:10px;">
+                <input type="password" id="loginPass" placeholder="รหัสผ่าน" style="margin-bottom:15px;">
+                <button id="btnLogin" class="btn btn-primary" onclick="login()">เข้าสู่ระบบ</button>
+                <button id="btnAutoLogin" class="btn btn-outline" style="margin-top:10px; display:none;" onclick="autoLoginWithDevice()">📱 เข้าสู่ระบบด่วนด้วย Device ID เครื่องนี้</button>
+                <div class="text-center" style="margin-top:15px;">
+                    <span class="link" onclick="toggleMainView('register-section')">ลงทะเบียนนักเรียนใหม่ (ผูก Device ID)</span>
+                </div>
+                <div class="text-center" style="margin-top:12px;">
+                    <span class="badge-device" id="login-device-badge">Device ID: กำลังตรวจสอบ...</span>
+                </div>
+            </div>
+            <div class="text-center"><button class="btn btn-outline" onclick="openTeacherAuthModal()">👩‍🏫 สำหรับครูผู้สอน (Teacher Mode)</button></div>
+        </div>
+    </div>
+
+    <!-- หน้าลงทะเบียน -->
+    <div id="register-section" class="view-section">
+        <div class="header"><h2>สร้างตัวละครใหม่ (EvoTask)</h2><p>ผูกข้อมูลเข้ากับรหัสประจำเครื่องอัตโนมัติ</p></div>
+        <div class="content">
+            <div class="card">
+                <input type="text" id="regName" placeholder="ชื่อ - นามสกุล นักเรียน" style="margin-bottom:10px;">
+                <input type="text" id="regUser" placeholder="รหัสประจำตัวนักเรียน (ใช้เป็นคีย์หลัก)" style="margin-bottom:10px;">
+                <input type="password" id="regPass" placeholder="ตั้งรหัสผ่าน" style="margin-bottom:15px;">
+                <div style="background:#f8fafc; padding:10px; border-radius:10px; margin-bottom:15px; font-size:12px; color:#636e72;">
+                    🔒 ระบบจะทำการผูกบัญชีนี้เข้ากับ <b>Device ID</b> ของสมาร์ทโฟนเครื่องนี้ เพื่อความแม่นยำในการส่งงาน
+                </div>
+                <button id="btnReg" class="btn btn-primary" onclick="register()">ยืนยันการสมัครสมาชิก</button>
+                <div class="text-center" style="margin-top:15px;"><span class="link" onclick="toggleMainView('login-section')">กลับหน้าเข้าสู่ระบบ</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- โหมดนักเรียน -->
+    <div id="student-section" class="view-section">
+        <div class="header flex-between">
+            <div style="text-align:left;">
+                <p style="margin:0;">ผู้เรียน: <span id="p-username-top"></span></p>
+                <h2 id="p-name"></h2>
+            </div>
+            <button onclick="logout()" class="btn-outline btn-small" style="color:white; border-color:white;">ออก</button>
+        </div>
+        <div class="content" style="flex:1;">
+            
+            <div id="tab-char-view">
+                <div class="card text-center">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span class="badge-device" id="stu-device-badge">Device ID: -</span>
+                        <button class="btn-outline btn-small" style="font-size:11px; padding:4px 8px;" onclick="openEvoGuideModal()">📖 ผังวิวัฒนาการ</button>
+                    </div>
+                    <div id="sprite-container">กำลังโหลดภาพ...</div>
+                    <h3 id="p-form-name" style="margin:5px 0;"></h3>
+                    
+                    <div class="exp-bar-wrapper">
+                        <div class="exp-bar-header">
+                            <span id="exp-next-label">ความก้าวหน้าสู่วิวัฒนาการขั้นต่อไป</span>
+                            <span id="exp-percent-text">0%</span>
+                        </div>
+                        <div class="exp-bar-bg">
+                            <div class="exp-bar-fill" id="exp-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-box"><small>🔬 EXP วิทย์</small><span id="p-sci">0</span></div>
+                        <div class="stat-box"><small>🎨 EXP ศิลป์</small><span id="p-art">0</span></div>
+                    </div>
+                </div>
+
+                <div class="card text-center">
+                    <h4 style="margin:0 0 8px 0;">QR Code ประจำตัวสำหรับส่งงาน</h4>
+                    <img id="my-qr-img" width="155" height="155" style="border: 4px solid #f0f4f8; border-radius: 12px;">
+                    <p style="font-size:12px; color:var(--text-muted); margin:8px 0;">รหัสอ้างอิง: <b id="my-username-text"></b></p>
+                    <button class="btn btn-outline" onclick="refreshStudentData()">🔄 อัปเดตสถานะมอนสเตอร์</button>
+                </div>
+            </div>
+
+            <div id="tab-mission-view" style="display:none;">
+                <div class="card">
+                    <h3 style="margin-top:0;">🎯 รายการภารกิจ (Missions)</h3>
+                    <div id="student-mission-list"></div>
+                </div>
+            </div>
+
+            <div id="tab-leaderboard-view" style="display:none;">
+                <div class="card">
+                    <h3 style="margin-top:0;">🏆 กระดานผู้นำ (Leaderboard)</h3>
+                    <div id="student-leaderboard-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item active" id="nav-char" onclick="switchStudentTab('char')">🏠 มอนสเตอร์</div>
+            <div class="nav-item" id="nav-mission" onclick="switchStudentTab('mission')">📋 ภารกิจ</div>
+            <div class="nav-item" id="nav-leaderboard" onclick="switchStudentTab('leaderboard')">🏆 จัดอันดับ</div>
+        </div>
+    </div>
+
+    <!-- โหมดครูผู้สอน -->
+    <div id="teacher-section" class="view-section">
+        <div class="header flex-between">
+            <h2>👩‍🏫 ระบบจัดการครู (EvoTask)</h2>
+            <button onclick="logout()" class="btn-outline btn-small" style="color:white; border-color:white;">ออก</button>
+        </div>
+        
+        <div class="top-nav">
+            <div class="top-nav-item active" id="t-nav-scan" onclick="switchTeacherTab('scan')">📷 สแกนงาน</div>
+            <div class="top-nav-item" id="t-nav-mission" onclick="switchTeacherTab('mission')">📋 ภารกิจ</div>
+            <div class="top-nav-item" id="t-nav-student" onclick="switchTeacherTab('student')">👨‍🎓 นักเรียน</div>
+            <div class="top-nav-item" id="t-nav-report" onclick="switchTeacherTab('report')">📊 รายงานผล</div>
+        </div>
+
+        <div class="content" style="flex:1;">
+            <!-- แท็บสแกนตรวจงาน -->
+            <div id="t-tab-scan">
+                <div class="card">
+                    <label style="font-size:13px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">1. เลือกภารกิจที่ต้องการตรวจ:</label>
+                    <select id="mission-select"></select>
+                </div>
+                <div class="card">
+                    <label style="font-size:13px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">2. สแกน QR Code หรือกรอกรหัส/Device ID:</label>
+                    <div style="display:flex; gap:10px; margin-bottom:12px;">
+                        <input type="text" id="manualUsername" placeholder="รหัสนักเรียน หรือ Device ID">
+                        <button class="btn btn-primary" style="width:auto; white-space:nowrap;" onclick="submitManualMission()">บันทึก</button>
+                    </div>
+
+                    <!-- กล่องแสดงกล้องสแกน -->
+                    <div id="reader" class="camera-box">
+                        <span style="font-size:13px; color:#aaa;">กดปุ่ม "เปิดกล้องสแกน" ด้านล่าง</span>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-bottom:10px;">
+                        <button id="btnStartCam" class="btn btn-success" onclick="startCameraDirectly()">📷 เปิดกล้องสแกน</button>
+                        <button id="btnStopCam" class="btn btn-accent" style="display:none;" onclick="stopCameraDirectly()">⏹️ ปิดกล้อง</button>
+                    </div>
+
+                    <!-- ทางเลือกสำรอง: สแกนจากรูปถ่าย หรือ เปิดหน้าต่างแยกกรณีติด iframe block -->
+                    <div style="display:flex; gap:8px;">
+                        <input type="file" id="qr-input-file" accept="image/*" capture="environment" style="display:none;" onchange="scanFromFile(this)">
+                        <button class="btn btn-outline btn-small" style="flex:1;" onclick="document.getElementById('qr-input-file').click()">🖼️ สแกนจากภาพถ่าย</button>
+                        <button id="btnPopupScan" class="btn btn-outline btn-small" style="flex:1; display:none;" onclick="openExternalScanner()">🚀 เปิดกล้องแยก (แก้บล็อก)</button>
+                    </div>
+
+                    <div id="scan-result" style="margin-top: 15px; text-align:center; font-weight: bold; padding: 10px; border-radius: 10px; background: #edf2f7;">พร้อมสแกน QR Code</div>
+                </div>
+            </div>
+
+            <!-- แท็บจัดการภารกิจ -->
+            <div id="t-tab-mission" style="display:none;">
+                <div class="card">
+                    <h4 style="margin-top:0;">➕ เพิ่มภารกิจ/ชิ้นงานใหม่</h4>
+                    <input type="text" id="newMissTitle" placeholder="ชื่อภารกิจ (เช่น ส่งสมุดโน้ตบทที่ 2)" style="margin-bottom:10px;">
+                    <textarea id="newMissDesc" placeholder="รายละเอียดเงื่อนไขการส่งงาน" style="margin-bottom:10px;"></textarea>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="newMissSci" placeholder="EXP วิทย์ (เช่น 30)">
+                        <input type="number" id="newMissArt" placeholder="EXP ศิลป์ (เช่น 10)">
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:10px;" onclick="createNewMission()">บันทึกภารกิจใหม่</button>
+                </div>
+                <div id="teacher-mission-list"></div>
+            </div>
+
+            <!-- แท็บจัดการนักเรียน -->
+            <div id="t-tab-student" style="display:none;">
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">รายชื่อนักเรียนและ Device ID</span>
+                    <button class="btn btn-primary btn-small" onclick="loadAllStudents()">🔄 รีเฟรช</button>
+                </div>
+                <div id="teacher-student-list"></div>
+            </div>
+
+            <!-- แท็บรายงานและสถิติ -->
+            <div id="t-tab-report" style="display:none;">
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">ตารางสรุปสถิติการส่งงาน</span>
+                    <button class="btn btn-primary btn-small" onclick="printReport()">🖨️ พิมพ์รายงาน PDF</button>
+                </div>
+                <div class="card" style="padding:0; overflow:hidden;">
+                    <div class="table-responsive" id="printable-area" style="padding: 15px; min-height: 100px;">
+                        <p class="text-center" style="color:#888;">กำลังโหลดข้อมูลรายงาน...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h4 style="margin-top:0;">⏱️ ประวัติการส่งงานล่าสุด (Submission Logs)</h4>
+                    <div id="recent-logs-area" style="font-size:12px; color:var(--text-muted);">กำลังโหลดประวัติ...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ยืนยันตัวตนครู -->
+<div id="teacherAuthModal" class="modal">
+    <div class="modal-content">
+        <h3>🔒 ยืนยันสิทธิ์ครูผู้สอน</h3>
+        <input type="password" id="teacherPin" style="margin-bottom:15px; letter-spacing: 5px; text-align:center;" placeholder="กรอกรหัส PIN">
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" onclick="closeTeacherAuthModal()">ยกเลิก</button>
+            <button id="btnVerifyPin" class="btn btn-primary" onclick="verifyTeacherPin()">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal แสดงผลลัพธ์การสแกนส่งงาน -->
+<div id="resultModal" class="modal">
+    <div class="modal-content">
+        <h3 id="res-title" style="color: var(--success); margin-top:0;">✅ บันทึกการส่งงานสำเร็จ!</h3>
+        <h4 id="res-student-name" style="margin:5px 0;"></h4>
+        <small id="res-mission-title" style="color:var(--primary); font-weight:bold; display:block; margin-bottom:10px;"></small>
+        <div id="res-sprite-container"></div>
+        <div id="res-form-name" style="font-weight:bold; margin-top:10px;"></div>
+        <p id="res-evolved-msg" style="display:none; color:#e67e22; font-weight:bold; font-size:16px;">✨ ยินดีด้วย! มอนสเตอร์วิวัฒนาการแล้ว! ✨</p>
+        <button class="btn btn-primary" style="margin-top:15px;" onclick="closeResultModal()">สแกนคนต่อไป</button>
+    </div>
+</div>
+
+<!-- Modal แก้ไขข้อมูลนักเรียน -->
+<div id="editStudentModal" class="modal">
+    <div class="modal-content">
+        <h3>แก้ไขข้อมูลนักเรียน</h3>
+        <p id="edit-stu-name" style="font-weight:bold;"></p>
+        <input type="hidden" id="edit-stu-user">
+        <div style="text-align:left; font-size:12px; margin-bottom:5px;">EXP วิทยาศาสตร์:</div>
+        <input type="number" id="edit-sci" placeholder="EXP วิทย์" style="margin-bottom:10px;">
+        <div style="text-align:left; font-size:12px; margin-bottom:5px;">EXP ศิลปะ:</div>
+        <input type="number" id="edit-art" placeholder="EXP ศิลป์" style="margin-bottom:10px;">
+        <div style="text-align:left; font-size:12px; margin-bottom:5px;">ร่างมอนสเตอร์:</div>
+        <select id="edit-form">
+            <option value="egg">ไข่ปริศนา (Lv.1)</option>
+            <option value="baby">เบบี้สไลม์ (Lv.2)</option>
+            <option value="rookie">มอนสเตอร์น้อย (Lv.3)</option>
+            <option value="sci_champ">แอนดรอยด์สายวิทย์ (Lv.4)</option>
+            <option value="art_champ">ภูตศิลปินสายศิลป์ (Lv.4)</option>
+            <option value="sci_ult">เมก้าบอทอัจฉริยะ (Lv.5)</option>
+            <option value="art_ult">เพกาซัสจินตนาการ (Lv.5)</option>
+            <option value="mega">จอมเทพไฮบริด (MAX)</option>
+        </select>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn btn-outline" onclick="closeEditStudentModal()">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveStudentEdit()">บันทึก</button>
+        </div>
+        <button class="btn btn-accent" style="margin-top:10px;" onclick="deleteStudentBtn()">ลบข้อมูลนักเรียน</button>
+    </div>
+</div>
+
+<!-- Modal ผังการวิวัฒนาการ -->
+<div id="evoGuideModal" class="modal">
+    <div class="modal-content" style="text-align:left;">
+        <h3 class="text-center" style="margin-top:0;">📖 เงื่อนไขการวิวัฒนาการ</h3>
+        <div style="font-size:12px; line-height:1.7;">
+            <p>🥚 <b>Lv.1 ไข่ปริศนา:</b> เริ่มต้น (0 EXP)</p>
+            <p>💧 <b>Lv.2 เบบี้สไลม์:</b> EXP รวมตั้งแต่ 30 ขึ้นไป</p>
+            <p>🦖 <b>Lv.3 มอนสเตอร์น้อย:</b> EXP รวมตั้งแต่ 60 ขึ้นไป</p>
+            <hr style="border:0; border-top:1px solid #eee;">
+            <p>🤖 <b>Lv.4 แอนดรอยด์ (สายวิทย์):</b> EXP วิทย์ ≥ 100</p>
+            <p>🧚 <b>Lv.4 ภูตศิลปิน (สายศิลป์):</b> EXP ศิลป์ ≥ 100</p>
+            <hr style="border:0; border-top:1px solid #eee;">
+            <p>🦾 <b>Lv.5 เมก้าบอท (สายวิทย์):</b> EXP วิทย์ ≥ 200</p>
+            <p>🦄 <b>Lv.5 เพกาซัส (สายศิลป์):</b> EXP ศิลป์ ≥ 200</p>
+            <hr style="border:0; border-top:1px solid #eee;">
+            <p>👑 <b>MAX จอมเทพไฮบริด:</b> EXP วิทย์ ≥ 300 <u>และ</u> EXP ศิลป์ ≥ 300</p>
+        </div>
+        <button class="btn btn-primary" style="margin-top:15px;" onclick="closeEvoGuideModal()">เข้าใจแล้ว!</button>
+    </div>
+</div>
+
+<script>
+// =========================================================================
+// ตั้งค่า URL เชื่อมต่อระหว่าง GitHub Pages และ Google Apps Script
+// =========================================================================
+const GAS_API_URL = "ใส่_URL_WEB_APP_ของคุณครูที่นี่"; // เช่น https://script.google.com/macros/s/AKfycb.../exec
+const GITHUB_SCANNER_URL = window.location.origin + window.location.pathname; // หรือใส่ URL ของ GitHub Pages เช่น https://username.github.io/evotask/
+
+let currentPlayer = null;
+let html5QrCode = null;
+let isScanning = false;
+let allMissionsCache = null;
+let clientDeviceId = "";
+
+let monsterData = {
+    "egg": { name: "ไข่ปริศนา (Lv.1)", img: "https://cdn-icons-png.flaticon.com/512/831/831168.png" },
+    "baby": { name: "เบบี้สไลม์ (Lv.2)", img: "https://cdn-icons-png.flaticon.com/512/3069/3069152.png" },
+    "rookie": { name: "มอนสเตอร์น้อย (Lv.3)", img: "https://cdn-icons-png.flaticon.com/512/10435/10435017.png" },
+    "sci_champ": { name: "แอนดรอยด์สายวิทย์ (Lv.4)", img: "https://cdn-icons-png.flaticon.com/512/11624/11624838.png" },
+    "art_champ": { name: "ภูตศิลปินสายศิลป์ (Lv.4)", img: "https://cdn-icons-png.flaticon.com/512/3103/3103070.png" },
+    "sci_ult": { name: "เมก้าบอทอัจฉริยะ (Lv.5)", img: "https://cdn-icons-png.flaticon.com/512/1710/1710200.png" },
+    "art_ult": { name: "เพกาซัสจินตนาการ (Lv.5)", img: "https://cdn-icons-png.flaticon.com/512/8834/8834045.png" },
+    "mega": { name: "จอมเทพไฮบริด (MAX)", img: "https://cdn-icons-png.flaticon.com/512/4392/4392502.png" }
+};
+
+// ฟังก์ชันตัวกลาง (Universal API Bridge) รองรับทั้งการรันบน GitHub Pages และ Google Apps Script
+function callServer(action, args = [], onSuccess, onFailure) {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+        // กรณีรันอยู่บน Google Apps Script
+        let runner = google.script.run.withSuccessHandler(onSuccess);
+        if (onFailure) runner = runner.withFailureHandler(onFailure);
+        runner[action].apply(runner, args);
+    } else {
+        // กรณีรันอยู่บน GitHub Pages (ส่งข้อมูลผ่าน Fetch POST เพื่อหลีกเลี่ยง CORS)
+        if (!GAS_API_URL || GAS_API_URL.includes("ใส่_URL")) {
+            const err = new Error("กรุณาใส่ GAS_API_URL ในไฟล์ index.html ก่อนใช้งานบน GitHub ครับ");
+            if (onFailure) onFailure(err); else alert(err.message);
+            return;
+        }
+        fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: action, args: args })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === 'ok') {
+                if (onSuccess) onSuccess(res.data);
+            } else {
+                if (onFailure) onFailure(new Error(res.message));
+            }
+        })
+        .catch(err => {
+            if (onFailure) onFailure(err);
+        });
+    }
+}
+
+function initDeviceId() {
+    try {
+        let devId = localStorage.getItem('evotask_device_id');
+        if (!devId) {
+            devId = 'DEV-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).slice(-4).toUpperCase();
+            localStorage.setItem('evotask_device_id', devId);
+        }
+        clientDeviceId = devId;
+    } catch (e) {
+        clientDeviceId = 'DEV-SESSION-' + Math.floor(1000 + Math.random() * 9000);
+    }
+    document.getElementById('login-device-badge').innerText = "Device ID: " + clientDeviceId;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    // ตรวจสอบว่าเปิดมาในโหมด Popup Scanner หรือไม่ (?mode=scanner)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'scanner') {
+        toggleMainView('popup-scanner-section');
+        startPopupScanner();
+        return;
+    }
+
+    initDeviceId();
+    callServer('getMonsterConfig', [], data => {
+        if (data && Object.keys(data).length > 0) monsterData = data;
+    });
+
+    callServer('loginByDeviceId', [clientDeviceId], res => {
+        if (res && res.success && res.player) {
+            const btnAuto = document.getElementById('btnAutoLogin');
+            btnAuto.style.display = "block";
+            btnAuto.innerText = `📱 เข้าสู่ระบบอัตโนมัติ (${res.player.name})`;
+        }
+    });
+});
+
+function autoLoginWithDevice() {
+    document.getElementById('btnAutoLogin').innerText = "กำลังตรวจสอบ Device ID...";
+    callServer('loginByDeviceId', [clientDeviceId], res => {
+        if (res && res.success) {
+            currentPlayer = res.player;
+            toggleMainView('student-section');
+            updateStudentUI();
+            loadStudentMissions();
+        } else {
+            alert("ไม่พบข้อมูลการผูกเครื่อง กรุณาล็อกอินด้วยรหัสผ่านปกติครับ");
+        }
+    });
+}
+
+function toggleMainView(viewId) {
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = "none");
+    document.getElementById(viewId).style.display = "flex";
+}
+
+function register() {
+    const n = document.getElementById('regName').value.trim();
+    const u = document.getElementById('regUser').value.trim();
+    const p = document.getElementById('regPass').value.trim();
+    if (!n || !u || !p) return alert("กรุณากรอกข้อมูลให้ครบถ้วนครับ");
+    
+    document.getElementById('btnReg').innerText = "กำลังสร้างข้อมูลและผูก Device ID...";
+    callServer('registerUser', [u, p, n, clientDeviceId], res => {
+        document.getElementById('btnReg').innerText = "ยืนยันการสมัครสมาชิก";
+        alert(res.message);
+        if (res.success) {
+            document.getElementById('loginUser').value = u;
+            toggleMainView('login-section');
+        }
+    }, err => {
+        document.getElementById('btnReg').innerText = "ยืนยันการสมัครสมาชิก";
+        alert("เกิดข้อผิดพลาด: " + err.message);
+    });
+}
+
+function login() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    if (!u || !p) return alert("กรุณากรอกรหัสประจำตัวและรหัสผ่าน");
+    
+    document.getElementById('btnLogin').innerText = "กำลังเข้าสู่ระบบ...";
+    callServer('loginUser', [u, p, clientDeviceId], res => {
+        document.getElementById('btnLogin').innerText = "เข้าสู่ระบบ";
+        if (res.success) {
+            currentPlayer = res.player;
+            toggleMainView('student-section');
+            updateStudentUI();
+            loadStudentMissions();
+        } else {
+            alert(res.message);
+        }
+    }, err => {
+        document.getElementById('btnLogin').innerText = "เข้าสู่ระบบ";
+        alert("เกิดข้อผิดพลาด: " + err.message);
+    });
+}
+
+function logout() {
+    currentPlayer = null;
+    document.getElementById('loginUser').value = "";
+    document.getElementById('loginPass').value = "";
+    stopCameraDirectly();
+    toggleMainView('login-section');
+}
+
+function switchStudentTab(tab) {
+    ['char','mission','leaderboard'].forEach(v => {
+        document.getElementById('tab-'+v+'-view').style.display = 'none';
+        document.getElementById('nav-'+v).classList.remove('active');
+    });
+    document.getElementById('tab-'+tab+'-view').style.display = 'block';
+    document.getElementById('nav-'+tab).classList.add('active');
+    
+    if (tab === 'mission') renderStudentMissions();
+    if (tab === 'leaderboard') loadLeaderboard();
+}
+
+function calculateExpProgress(sci, art) {
+    const total = sci + art;
+    const maxSingle = Math.max(sci, art);
+    if (sci >= 300 && art >= 300) return { percent: 100, label: "🌟 วิวัฒนาการขั้นสูงสุดแล้ว (MAX Level)" };
+    if (maxSingle >= 200) return { percent: Math.min(100, Math.round(((sci + art) / 600) * 100)), label: `สู่จอมเทพไฮบริด (ต้องมีวิทย์ ≥300 และศิลป์ ≥300)` };
+    if (maxSingle >= 100) return { percent: Math.min(100, Math.round(((maxSingle - 100) / 100) * 100)), label: `สู่ร่างสมบูรณ์ Lv.5 (${maxSingle}/200 EXP)` };
+    if (total >= 60) return { percent: Math.min(100, Math.round((maxSingle / 100) * 100)), label: `สู่ร่างแชมเปี้ยน Lv.4 (สะสมสายใดสายหนึ่งให้ถึง 100 EXP)` };
+    if (total >= 30) return { percent: Math.min(100, Math.round(((total - 30) / 30) * 100)), label: `สู่มอนสเตอร์น้อย Lv.3 (${total}/60 EXP รวม)` };
+    return { percent: Math.min(100, Math.round((total / 30) * 100)), label: `สู่เบบี้สไลม์ Lv.2 (${total}/30 EXP รวม)` };
+}
+
+function updateStudentUI() {
+    if (!currentPlayer) return;
+    const f = monsterData[currentPlayer.currentForm] || monsterData["egg"];
+    document.getElementById('p-name').innerText = currentPlayer.name;
+    document.getElementById('p-username-top').innerText = currentPlayer.username;
+    document.getElementById('p-form-name').innerText = f.name;
+    document.getElementById('sprite-container').innerHTML = `<img src="${f.img}" class="img-sprite">`;
+    document.getElementById('p-sci').innerText = currentPlayer.sciExp;
+    document.getElementById('p-art').innerText = currentPlayer.artExp;
+    document.getElementById('stu-device-badge').innerText = "Device ID: " + (currentPlayer.deviceId || clientDeviceId);
+    
+    const prog = calculateExpProgress(currentPlayer.sciExp, currentPlayer.artExp);
+    document.getElementById('exp-next-label').innerText = prog.label;
+    document.getElementById('exp-percent-text').innerText = prog.percent + "%";
+    document.getElementById('exp-bar-fill').style.width = prog.percent + "%";
+
+    const qrPayload = currentPlayer.username + "|" + (currentPlayer.deviceId || clientDeviceId);
+    document.getElementById('my-username-text').innerText = `${currentPlayer.username} (${currentPlayer.deviceId || clientDeviceId})`;
+    document.getElementById('my-qr-img').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrPayload);
+}
+
+function refreshStudentData() {
+    if (!currentPlayer) return;
+    callServer('getPlayerData', [currentPlayer.username], data => {
+        if (data) { currentPlayer = data; updateStudentUI(); renderStudentMissions(); }
+    });
+}
+
+function openEvoGuideModal() { document.getElementById('evoGuideModal').style.display = "flex"; }
+function closeEvoGuideModal() { document.getElementById('evoGuideModal').style.display = "none"; }
+
+function loadStudentMissions() {
+    callServer('getMissionsList', [], m => { 
+        allMissionsCache = m; 
+        renderStudentMissions(); 
+    });
+}
+
+function renderStudentMissions() {
+    const list = document.getElementById('student-mission-list');
+    list.innerHTML = "";
+    if (!allMissionsCache) { list.innerHTML = "<p class='text-center'>กำลังโหลดภารกิจ...</p>"; return; }
+    
+    for (let k in allMissionsCache) {
+        let m = allMissionsCache[k];
+        let done = (currentPlayer.completedMissions || []).includes(m.id);
+        list.innerHTML += `
+        <div class="list-item" style="${done ? 'opacity:0.65; border-left-color:#2ed573; background:#f8fff9;':''}">
+            <div style="display:flex; justify-content:space-between;">
+                <div>
+                    <h4 style="margin:0 0 5px 0;">${m.title}</h4>
+                    <p style="margin:0 0 5px 0; font-size:12px;">${m.desc}</p>
+                    <small style="color:var(--primary);font-weight:bold;">🔬 วิทย์ +${m.sci} | 🎨 ศิลป์ +${m.art}</small>
+                </div>
+                <div style="font-size: 20px; align-self:center;">${done ? '✅ ส่งแล้ว' : '⏳'}</div>
+            </div>
+        </div>`;
+    }
+}
+
+function loadLeaderboard() {
+    const list = document.getElementById('student-leaderboard-list');
+    list.innerHTML = "<p class='text-center' style='color:#666;'>กำลังประมวลผลอันดับ...</p>";
+    
+    callServer('getLeaderboardData', [], data => {
+        list.innerHTML = "";
+        if (!data || data.length === 0) { list.innerHTML = "<p class='text-center'>ยังไม่มีข้อมูลผู้เรียนในระบบ</p>"; return; }
+        
+        data.forEach(s => {
+            let rankClass = ""; let rankDisplay = s.rank;
+            if (s.rank === 1) { rankClass = "rank-1"; rankDisplay = "🥇"; }
+            else if (s.rank === 2) { rankClass = "rank-2"; rankDisplay = "🥈"; }
+            else if (s.rank === 3) { rankClass = "rank-3"; rankDisplay = "🥉"; }
+            
+            let img = monsterData[s.currentForm] ? monsterData[s.currentForm].img : monsterData["egg"].img;
+            let formName = monsterData[s.currentForm] ? monsterData[s.currentForm].name : "ไข่ปริศนา";
+            
+            list.innerHTML += `
+                <div class="rank-item">
+                    <div class="rank-num ${rankClass}">${rankDisplay}</div>
+                    <img src="${img}" width="45" height="45" style="margin: 0 15px; object-fit:contain;">
+                    <div class="rank-info" style="flex:1;">
+                        <p style="margin:0; font-weight:600; font-size:14px;">${s.name}</p>
+                        <small style="color:var(--text-muted);">${formName}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-weight:700; color:var(--primary); font-size:15px;">${s.totalExp} EXP</span><br>
+                        <small style="font-size:10px; color:#888;">วิทย์ ${s.sciExp} | ศิลป์ ${s.artExp}</small>
+                    </div>
+                </div>
+            `;
+        });
+    }, err => { list.innerHTML = `<p class="text-center" style="color:red;">ผิดพลาด: ${err.message}</p>`; });
+}
+
+function openTeacherAuthModal() { 
+    document.getElementById('teacherPin').value = "";
+    document.getElementById('teacherAuthModal').style.display = "flex"; 
+}
+function closeTeacherAuthModal() { document.getElementById('teacherAuthModal').style.display = "none"; }
+
+function verifyTeacherPin() {
+    const pin = document.getElementById('teacherPin').value;
+    const btn = document.getElementById('btnVerifyPin');
+    btn.innerText = "กำลังตรวจสอบ...";
+    
+    callServer('verifyTeacherPinBackend', [pin], res => {
+        btn.innerText = "เข้าสู่ระบบ";
+        if (res && res.success) {
+            closeTeacherAuthModal(); 
+            toggleMainView('teacher-section'); 
+            switchTeacherTab('scan');
+        } else {
+            alert("รหัส PIN สำหรับครูไม่ถูกต้องครับ");
+        }
+    }, err => {
+        btn.innerText = "เข้าสู่ระบบ";
+        alert("เกิดข้อผิดพลาด: " + err.message);
+    });
+}
+
+function switchTeacherTab(t) {
+    ['scan','mission','student','report'].forEach(v => {
+        document.getElementById('t-tab-'+v).style.display = 'none';
+        document.getElementById('t-nav-'+v).classList.remove('active');
+    });
+    document.getElementById('t-tab-'+t).style.display = 'block';
+    document.getElementById('t-nav-'+t).classList.add('active');
+    
+    if (t === 'scan') { 
+        loadTeacherMissions(); 
+    } else {
+        stopCameraDirectly();
+        if (t === 'mission') loadTeacherMissionsList();
+        if (t === 'student') loadAllStudents();
+        if (t === 'report') loadReportData();
+    }
+}
+
+function loadTeacherMissions() {
+    callServer('getMissionsList', [], m => {
+        allMissionsCache = m;
+        const sel = document.getElementById('mission-select');
+        sel.innerHTML = '<option value="">-- กรุณาเลือกภารกิจที่จะตรวจ --</option>';
+        for (let k in m) sel.innerHTML += `<option value="${m[k].id}">${m[k].title} (วิทย์+${m[k].sci}, ศิลป์+${m[k].art})</option>`;
+    });
+}
+
+// =========================================================================
+// ระบบควบคุมกล้องสแกนแบบ Direct Stream (แก้ปัญหา Permission Denied)
+// =========================================================================
+function startCameraDirectly() {
+    const mId = document.getElementById('mission-select').value;
+    if (!mId) return alert("กรุณาเลือกภารกิจที่ต้องการตรวจในข้อ 1 ก่อนเปิดกล้องครับ!");
+
+    document.getElementById('scan-result').innerHTML = "⏳ กำลังขอสิทธิ์เปิดกล้อง...";
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 230, height: 230 } },
+        (decodedText) => {
+            onScanSuccessHandler(decodedText);
+        },
+        (errorMessage) => {}
+    ).then(() => {
+        isScanning = true;
+        document.getElementById('btnStartCam').style.display = "none";
+        document.getElementById('btnStopCam').style.display = "block";
+        document.getElementById('scan-result').innerHTML = "📷 กล้องพร้อมแล้ว! นำ QR Code มาส่องได้เลย";
+    }).catch(err => {
+        console.error(err);
+        document.getElementById('scan-result').innerHTML = "❌ เบราว์เซอร์บล็อกกล้อง (กรุณาเปิดผ่านลิงก์ GitHub Pages หรือกดปุ่มสแกนจากภาพถ่าย)";
+        document.getElementById('btnPopupScan').style.display = "block";
+    });
+}
+
+function stopCameraDirectly() {
+    if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
+            isScanning = false;
+            document.getElementById('btnStartCam').style.display = "block";
+            document.getElementById('btnStopCam').style.display = "none";
+            document.getElementById('reader').innerHTML = '<span style="font-size:13px; color:#aaa;">ปิดกล้องแล้ว</span>';
+        }).catch(err => console.log(err));
+    }
+}
+
+function scanFromFile(input) {
+    if (!input.files || input.files.length === 0) return;
+    const mId = document.getElementById('mission-select').value;
+    if (!mId) { input.value = ""; return alert("กรุณาเลือกภารกิจก่อนสแกนครับ!"); }
+
+    const imageFile = input.files[0];
+    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+    document.getElementById('scan-result').innerHTML = "⏳ กำลังอ่าน QR Code จากภาพถ่าย...";
+
+    html5QrCode.scanFile(imageFile, true)
+    .then(decodedText => {
+        input.value = "";
+        onScanSuccessHandler(decodedText);
+    })
+    .catch(err => {
+        input.value = "";
+        document.getElementById('scan-result').innerHTML = "❌ ไม่พบ QR Code ในภาพนี้ กรุณาลองใหม่";
+    });
+}
+
+function onScanSuccessHandler(scannedText) {
+    const mId = document.getElementById('mission-select').value;
+    if (!mId) return alert("กรุณาเลือกภารกิจก่อนสแกนครับ!");
+
+    if (html5QrCode && isScanning) {
+        try { html5QrCode.pause(); } catch(e) {}
+    }
+    document.getElementById('scan-result').innerHTML = "🔍 พบ QR Code! กำลังบันทึกคะแนน...";
+
+    callServer('teacherApproveMission', [scannedText, mId], res => {
+        if (res.success) {
+            showTeacherResultModal(res.player, res.isEvolved, res.missionTitle);
+            document.getElementById('scan-result').innerHTML = "✅ บันทึกสำเร็จ!";
+        } else {
+            document.getElementById('scan-result').innerHTML = "❌ " + res.message;
+            setTimeout(() => { if (html5QrCode && isScanning) try { html5QrCode.resume(); } catch(e){} }, 2000);
+        }
+    }, err => {
+        document.getElementById('scan-result').innerHTML = "❌ ผิดพลาด: " + err.message;
+        setTimeout(() => { if (html5QrCode && isScanning) try { html5QrCode.resume(); } catch(e){} }, 2000);
+    });
+}
+
+// สำหรับกรณีเปิดหน้าต่างแยก (Popup Scanner)
+function openExternalScanner() {
+    const mId = document.getElementById('mission-select').value;
+    if (!mId) return alert("กรุณาเลือกภารกิจก่อนครับ!");
+    window.open(GITHUB_SCANNER_URL + "?mode=scanner", "EvoTaskScanner", "width=420,height=600");
+}
+
+function startPopupScanner() {
+    const popupQr = new Html5Qrcode("popup-reader");
+    popupQr.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (decodedText) => {
+            document.getElementById('popup-status').innerText = "✅ สแกนสำเร็จ: " + decodedText;
+            if (window.opener) {
+                window.opener.postMessage({ type: 'EVOTASK_QR', code: decodedText }, '*');
+                setTimeout(() => window.close(), 600);
+            }
+        },
+        (err) => {}
+    ).catch(e => {
+        document.getElementById('popup-status').innerText = "❌ ไม่สามารถเปิดกล้องได้: " + e;
+    });
+}
+
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'EVOTASK_QR') {
+        document.getElementById('manualUsername').value = event.data.code;
+        submitManualMission();
+    }
+});
+
+function submitManualMission() {
+    const mId = document.getElementById('mission-select').value;
+    const u = document.getElementById('manualUsername').value.trim();
+    if (!mId || !u) return alert("กรุณาเลือกภารกิจและกรอกรหัสนักเรียนหรือ Device ID ครับ!");
+    
+    document.getElementById('scan-result').innerHTML = "⏳ กำลังบันทึกข้อมูลเข้าฐานข้อมูล...";
+    callServer('teacherApproveMission', [u, mId], res => {
+        if (res.success) {
+            document.getElementById('manualUsername').value = "";
+            document.getElementById('scan-result').innerHTML = "✅ บันทึกสำเร็จ!";
+            showTeacherResultModal(res.player, res.isEvolved, res.missionTitle);
+        } else { 
+            document.getElementById('scan-result').innerHTML = "❌ " + res.message; 
+        }
+    }, err => { document.getElementById('scan-result').innerHTML = "❌ ผิดพลาด: " + err.message; });
+}
+
+function showTeacherResultModal(p, isEvolved, missionTitle) {
+    document.getElementById('res-student-name').innerText = `${p.name} (${p.username})`;
+    document.getElementById('res-mission-title').innerText = `ภารกิจ: ${missionTitle || ''}`;
+    let img = monsterData[p.currentForm] ? monsterData[p.currentForm].img : monsterData["egg"].img;
+    let mName = monsterData[p.currentForm] ? monsterData[p.currentForm].name : "ไข่ปริศนา";
+    
+    document.getElementById('res-sprite-container').innerHTML = `<img src="${img}" class="img-sprite ${isEvolved ? 'evolve-anim' : ''}">`;
+    document.getElementById('res-form-name').innerText = mName + ` (วิทย์: ${p.sciExp} | ศิลป์: ${p.artExp})`;
+    document.getElementById('res-evolved-msg').style.display = isEvolved ? "block" : "none";
+    document.getElementById('resultModal').style.display = "flex";
+}
+
+function closeResultModal() {
+    document.getElementById('resultModal').style.display = "none";
+    if (html5QrCode && isScanning) {
+        try { html5QrCode.resume(); } catch(e) {}
+    }
+}
+
+function loadTeacherMissionsList() {
+    const list = document.getElementById('teacher-mission-list');
+    list.innerHTML = "<p class='text-center'>กำลังโหลดรายการภารกิจ...</p>";
+    
+    callServer('getMissionsList', [], m => {
+        list.innerHTML = "";
+        for (let k in m) {
+            list.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 15px;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">${m[k].title} <small style="color:#888;">(${m[k].id})</small></h4>
+                    <p style="margin:0 0 5px 0; font-size:12px; color:#666;">${m[k].desc}</p>
+                    <small style="color:var(--primary); font-weight:bold;">🔬 วิทย์ +${m[k].sci} | 🎨 ศิลป์ +${m[k].art}</small>
+                </div>
+                <button class="btn btn-accent btn-small" onclick="delMission('${m[k].id}')">ลบ</button>
+            </div>`;
+        }
+    }, err => { list.innerHTML = `<p class='text-center' style='color:red;'>${err.message}</p>`; });
+}
+
+function createNewMission() {
+    const t = document.getElementById('newMissTitle').value.trim();
+    const d = document.getElementById('newMissDesc').value.trim();
+    const s = document.getElementById('newMissSci').value;
+    const a = document.getElementById('newMissArt').value;
+    if (!t) return alert("กรุณาระบุชื่อภารกิจด้วยครับ");
+    
+    callServer('addMission', [t, d, s, a], res => {
+        alert(res.message); 
+        loadTeacherMissionsList();
+        document.getElementById('newMissTitle').value = ""; 
+        document.getElementById('newMissDesc').value = "";
+        document.getElementById('newMissSci').value = ""; 
+        document.getElementById('newMissArt').value = "";
+    }, err => alert("เพิ่มภารกิจไม่สำเร็จ: " + err.message));
+}
+
+function delMission(id) {
+    if (confirm("ยืนยันการลบภารกิจนี้หรือไม่?")) {
+        callServer('deleteMission', [id], res => { 
+            alert(res.message); 
+            loadTeacherMissionsList(); 
+        });
+    }
+}
+
+function loadAllStudents() {
+    const list = document.getElementById('teacher-student-list');
+    list.innerHTML = "<p class='text-center'>กำลังโหลดข้อมูลนักเรียน...</p>";
+    
+    callServer('getAllStudents', [], students => {
+        list.innerHTML = "";
+        if (!students || students.length === 0) {
+            list.innerHTML = "<p class='text-center' style='color:#888;'>ยังไม่มีนักเรียนในระบบ</p>";
+            return;
+        }
+        students.forEach(s => {
+            let img = monsterData[s.currentForm] ? monsterData[s.currentForm].img : monsterData["egg"].img;
+            list.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 15px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <img src="${img}" width="50" height="50" style="object-fit:contain; background:#f4f7fb; border-radius:50%; padding:5px;">
+                    <div>
+                        <h4 style="margin:0; font-size:15px;">${s.name}</h4>
+                        <small style="color:#666;">รหัส: <b>${s.username}</b> | Device: <b>${s.deviceId || 'ยังไม่ผูก'}</b></small><br>
+                        <small style="color:var(--primary); font-weight:bold;">วิทย์ ${s.sciExp} | ศิลป์ ${s.artExp}</small>
+                    </div>
+                </div>
+                <button class="btn btn-outline btn-small" onclick="openEditStu('${s.username}', '${s.name}', ${s.sciExp}, ${s.artExp}, '${s.currentForm}')">แก้ไข</button>
+            </div>`;
+        });
+    }, err => { list.innerHTML = `<p class='text-center' style='color:red;'>เกิดข้อผิดพลาด: ${err.message}</p>`; });
+}
+
+function openEditStu(user, name, sci, art, form) {
+    document.getElementById('edit-stu-user').value = user;
+    document.getElementById('edit-stu-name').innerText = name + " (รหัส: " + user + ")";
+    document.getElementById('edit-sci').value = sci;
+    document.getElementById('edit-art').value = art;
+    document.getElementById('edit-form').value = form;
+    document.getElementById('editStudentModal').style.display = "flex";
+}
+
+function closeEditStudentModal() { document.getElementById('editStudentModal').style.display = "none"; }
+
+function saveStudentEdit() {
+    const u = document.getElementById('edit-stu-user').value;
+    const s = document.getElementById('edit-sci').value;
+    const a = document.getElementById('edit-art').value;
+    const f = document.getElementById('edit-form').value;
+    
+    callServer('updateStudentData', [u, s, a, f], res => {
+        alert(res.message); 
+        closeEditStudentModal(); 
+        loadAllStudents();
+    }, err => alert("บันทึกไม่สำเร็จ: " + err.message));
+}
+
+function deleteStudentBtn() {
+    const u = document.getElementById('edit-stu-user').value;
+    if (confirm("⚠️ คำเตือน! ลบข้อมูลนักเรียนแล้วไม่สามารถกู้คืนได้ ยืนยันหรือไม่?")) {
+        callServer('deleteStudent', [u], res => {
+            alert(res.message); 
+            closeEditStudentModal(); 
+            loadAllStudents();
+        });
+    }
+}
+
+function loadReportData() {
+    const container = document.getElementById('printable-area');
+    const logContainer = document.getElementById('recent-logs-area');
+    container.innerHTML = "<p class='text-center'>กำลังประมวลผลข้อมูลจากตาราง...</p>";
+    
+    callServer('getReportData', [], data => {
+        if (!data || !data.students || !data.missions) {
+            container.innerHTML = "<p class='text-center' style='color:red;'>ไม่พบข้อมูล</p>";
+            return;
+        }
+        
+        const students = data.students;
+        const missions = data.missions;
+        const mKeys = Object.keys(missions);
+        
+        if (students.length === 0) {
+            container.innerHTML = "<p class='text-center' style='color:#888;'>ยังไม่มีนักเรียนในระบบ</p>";
+            return;
+        }
+        
+        let html = '<table class="report-table">';
+        html += '<tr><th>ชื่อนักเรียน / รหัส (Device ID)</th>';
+        mKeys.forEach(k => { html += `<th>${missions[k].title}</th>`; });
+        html += '<th>ส่งแล้ว (%)</th><th>EXP รวม</th></tr>';
+        
+        students.forEach(s => {
+            html += `<tr><td><b style="font-size:13px;">${s.name}</b><br><span style="color:#666; font-size:10px;">ID: ${s.username} | ${s.deviceId || '-'}</span></td>`;
+            let totalExp = parseInt(s.sciExp) + parseInt(s.artExp);
+            let doneCount = 0;
+            
+            mKeys.forEach(k => {
+                let isDone = (s.completedMissions || []).includes(missions[k].id);
+                if (isDone) doneCount++;
+                html += `<td>${isDone ? '<span style="color:#2ed573; font-size:15px;">✅</span>' : '<span style="color:#ccc;">-</span>'}</td>`;
+            });
+            let submitRate = mKeys.length > 0 ? Math.round((doneCount / mKeys.length) * 100) : 0;
+            html += `<td style="font-weight:bold;">${submitRate}%</td>`;
+            html += `<td style="font-weight:bold; color:var(--primary); font-size:14px;">${totalExp}</td></tr>`;
+        });
+        
+        html += '</table>';
+        container.innerHTML = html;
+
+        if (data.logs && data.logs.length > 0) {
+            let logHtml = "<ul style='padding-left:18px; margin:0;'>";
+            data.logs.forEach(l => {
+                logHtml += `<li style="margin-bottom:6px;"><b>${l.time}</b> - ${l.name} (${l.deviceId}) ส่งงาน <u>${l.missionTitle}</u> (+${l.sci} วิทย์, +${l.art} ศิลป์)</li>`;
+            });
+            logHtml += "</ul>";
+            logContainer.innerHTML = logHtml;
+        } else {
+            logContainer.innerHTML = "<p style='margin:0;'>ยังไม่มีประวัติการสแกนส่งงาน</p>";
+        }
+    }, err => { container.innerHTML = `<p class='text-center' style='color:red;'>ดึงข้อมูลไม่สำเร็จ: ${err.message}</p>`; });
+}
+
+function printReport() {
+    const container = document.getElementById('printable-area');
+    if (container.innerHTML.includes("กำลัง")) return alert("กรุณารอโหลดข้อมูลตารางให้เสร็จก่อนกดพิมพ์ครับ");
+    
+    const printContent = container.innerHTML;
+    const printWindow = window.open('', '_blank', 'width=950,height=650');
+    
+    let htmlStr = `
+        <html>
+        <head>
+            <title>รายงานสรุปสถิติการส่งงาน - EvoTask</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+                body { font-family: 'Sarabun', sans-serif; padding: 20px; color: #333; }
+                h2, h4 { text-align: center; margin: 5px 0; }
+                table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                td:first-child { text-align: left; }
+                @media print {
+                    @page { size: landscape; margin: 1cm; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>รายงานสรุปผลการส่งภาระงานผู้เรียน (ระบบ EvoTask)</h2>
+            <h4>โรงเรียนบ้านตูม</h4>
+            ${printContent}
+            <div style="text-align:right; margin-top:20px; font-size:12px;">พิมพ์ข้อมูลเมื่อ: ${new Date().toLocaleString('th-TH')}</div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(htmlStr);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
+}
+</script>
+</body>
+</html>
